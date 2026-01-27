@@ -79,7 +79,6 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
     setStatus('connecting');
     setIsActive(true);
 
-    // Initialize GoogleGenAI with the required format
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
     try {
@@ -104,7 +103,6 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
               
               const pcmData = new Uint8Array(int16.buffer);
               
-              // Use session promise to send inputs only when connected
               sessionPromise.then((session) => {
                 session.sendRealtimeInput({
                   media: { 
@@ -118,8 +116,8 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
             scriptProcessor.connect(inputCtx.destination);
           },
           onmessage: async (message: LiveServerMessage) => {
-            // Handle Tool Calls (Voice Transaction)
-            if (message.toolCall) {
+            // Handle Tool Calls (Voice Transaction) with safety checks for TS
+            if (message.toolCall && message.toolCall.functionCalls) {
               for (const fc of message.toolCall.functionCalls) {
                 if (fc.name === 'addTransaction') {
                   const args = fc.args as any;
@@ -136,7 +134,6 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
                   setLastAdded({ merchant: args.merchant, amount: args.amount });
                   setTimeout(() => setLastAdded(null), 5000);
 
-                  // Respond to tool call to update model context
                   sessionPromise.then((session) => {
                     session.sendToolResponse({
                       functionResponses: [{
@@ -150,11 +147,11 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
               }
             }
 
-            const audioData = message.serverContent?.modelTurn?.parts[0]?.inlineData?.data;
+            // Safe access to audio parts with optional chaining for TS
+            const audioData = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
             if (audioData) {
               setStatus('speaking');
               
-              // Correct scheduling of incoming raw PCM chunks
               nextStartTimeRef.current = Math.max(
                 nextStartTimeRef.current,
                 outputCtx.currentTime,
@@ -175,7 +172,6 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
               nextStartTimeRef.current = nextStartTimeRef.current + audioBuffer.duration;
               
               source.onended = () => {
-                // Return to listening state when queue finishes
                 if (outputCtx.currentTime >= nextStartTimeRef.current - 0.1) {
                     setStatus('listening');
                 }
@@ -240,7 +236,6 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
       </div>
 
       <div className="relative">
-        {/* Transaction Success Toast */}
         {lastAdded && (
           <div className="absolute -top-16 left-1/2 -translate-x-1/2 bg-black text-white px-4 py-2 rounded-2xl shadow-xl flex items-center gap-3 w-max animate-bounce border-2 border-emerald-500">
             <span className="text-xl">✅</span>
