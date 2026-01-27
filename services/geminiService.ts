@@ -41,9 +41,17 @@ export const analyzeReceipt = async (base64Image: string) => {
 export const parseMpesaMessage = async (text: string) => {
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
-    contents: `Analyze this M-Pesa SMS and extract structured data. 
-    Text: "${text}"
-    Return JSON with fields: amount (number), merchant (string), date (string), transactionType (expense/income), category (one of the app's categories), referenceId (string).`,
+    contents: `Analyze this Kenyan M-Pesa SMS and extract structured data. It could be a P2P transfer, Buy Goods (Till), Paybill, or withdrawal.
+    
+    Format Example 1: "UAR594TQV1 Confirmed. Ksh1,000.00 sent to Safaricom Post Paid for account 0728999073 on 27/1/26 at 2:11 PM"
+    Expected: { "amount": 1000, "merchant": "Safaricom Post Paid", "date": "2026-01-27", "transactionType": "expense", "category": "Utilities", "referenceId": "UAR594TQV1" }
+
+    Format Example 2: "RBS1234567 Confirmed. Ksh2,500.00 paid to NAIVAS SUPERMARKET on 15/2/25"
+    Expected: { "amount": 2500, "merchant": "NAIVAS SUPERMARKET", "date": "2025-02-15", "transactionType": "expense", "category": "Food & Groceries", "referenceId": "RBS1234567" }
+
+    Text to parse: "${text}"
+    
+    Return JSON with fields: amount (number), merchant (string), date (string as YYYY-MM-DD), transactionType (expense/income), category (one of the app's categories), referenceId (string).`,
     config: {
       responseMimeType: "application/json",
       responseSchema: {

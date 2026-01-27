@@ -33,6 +33,7 @@ export interface UserProfile {
   password?: string;
   insurancePremium?: number;
   mortgageInterest?: number;
+  hasOnboarded?: boolean;
 }
 
 export interface Budget {

@@ -42,14 +42,16 @@ const App: React.FC = () => {
       industry: 'Other',
       financialGoals: [],
       avatar: 'lion',
-      isPasswordEnabled: false
+      isPasswordEnabled: false,
+      hasOnboarded: false
     }) : {
       fullName: '',
       employmentType: EmploymentType.OTHER,
       monthlyIncome: 0,
       industry: 'Other',
       financialGoals: [],
-      avatar: 'lion'
+      avatar: 'lion',
+      hasOnboarded: false
     };
   });
 
@@ -58,9 +60,9 @@ const App: React.FC = () => {
     window.scrollTo(0, 0);
   }, [activeTab]);
 
-  // Onboarding check
+  // Onboarding check: Only show welcome if the user hasn't onboarded yet
   useEffect(() => {
-    if (!profile.fullName) {
+    if (!profile.hasOnboarded) {
       setShowWelcome(true);
     }
   }, []);
@@ -100,6 +102,12 @@ const App: React.FC = () => {
 
   const updateChallenges = (newChallenges: SavingsChallenge[]) => {
     setChallenges(newChallenges);
+  };
+
+  const completeOnboarding = () => {
+    setProfile(prev => ({ ...prev, hasOnboarded: true }));
+    setShowWelcome(false);
+    setActiveTab('profile');
   };
 
   const handleUnlock = (e: React.FormEvent) => {
@@ -154,7 +162,7 @@ const App: React.FC = () => {
           The smart financial tracker designed for Kenyans. Track M-Pesa, maximize KRA refunds, and build wealth.
         </p>
         <button 
-          onClick={() => { setShowWelcome(false); setActiveTab('profile'); }}
+          onClick={completeOnboarding}
           className="w-full max-w-xs bg-black text-white py-5 rounded-[28px] font-black uppercase tracking-widest text-sm shadow-2xl hover:bg-emerald-900 transition-all active:scale-95"
         >
           Get Started &rarr;
