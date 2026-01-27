@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Transaction, Category, UserProfile, EmploymentType, Budget, SavingsChallenge } from './types';
 import Dashboard from './components/Dashboard';
@@ -51,6 +52,11 @@ const App: React.FC = () => {
       avatar: 'lion'
     };
   });
+
+  // Scroll to top on tab change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [activeTab]);
 
   // Onboarding check
   useEffect(() => {
