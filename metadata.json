@@ -1,0 +1,8 @@
+{
+  "name": "Ziada",
+  "description": "Smart expense and tax assistant for Kenyans. Automatically tracks M-Pesa, scans receipts, and optimizes KRA tax returns using AI.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

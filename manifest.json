@@ -1,0 +1,18 @@
+
+{
+  "name": "Ziada - Kenya",
+  "short_name": "Ziada",
+  "description": "Smart Kenyan expense and tax assistant with M-Pesa integration.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#065f46",
+  "theme_color": "#065f46",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/583/583985.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
