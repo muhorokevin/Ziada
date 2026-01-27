@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Transaction, Category, UserProfile, EmploymentType, Budget, SavingsChallenge } from './types';
 import Dashboard from './components/Dashboard';
@@ -19,22 +18,22 @@ const App: React.FC = () => {
   const [showWelcome, setShowWelcome] = useState(false);
   
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const saved = localStorage.getItem('ziada_tx_secure');
+    const saved = localStorage.getItem('akiba_tx_secure');
     return saved ? (decryptData(saved) || []) : [];
   });
   
   const [budgets, setBudgets] = useState<Budget[]>(() => {
-    const saved = localStorage.getItem('ziada_bg_secure');
+    const saved = localStorage.getItem('akiba_bg_secure');
     return saved ? (decryptData(saved) || []) : [];
   });
 
   const [challenges, setChallenges] = useState<SavingsChallenge[]>(() => {
-    const saved = localStorage.getItem('ziada_ch_secure');
+    const saved = localStorage.getItem('akiba_ch_secure');
     return saved ? (decryptData(saved) || []) : [];
   });
   
   const [profile, setProfile] = useState<UserProfile>(() => {
-    const saved = localStorage.getItem('ziada_pr_secure');
+    const saved = localStorage.getItem('akiba_pr_secure');
     return saved ? (decryptData(saved) || {
       fullName: '',
       employmentType: EmploymentType.OTHER,
@@ -70,19 +69,19 @@ const App: React.FC = () => {
   const t = TRANSLATIONS[lang];
 
   useEffect(() => {
-    localStorage.setItem('ziada_pr_secure', encryptData(profile));
+    localStorage.setItem('akiba_pr_secure', encryptData(profile));
   }, [profile]);
 
   useEffect(() => {
-    localStorage.setItem('ziada_tx_secure', encryptData(transactions));
+    localStorage.setItem('akiba_tx_secure', encryptData(transactions));
   }, [transactions]);
 
   useEffect(() => {
-    localStorage.setItem('ziada_bg_secure', encryptData(budgets));
+    localStorage.setItem('akiba_bg_secure', encryptData(budgets));
   }, [budgets]);
 
   useEffect(() => {
-    localStorage.setItem('ziada_ch_secure', encryptData(challenges));
+    localStorage.setItem('akiba_ch_secure', encryptData(challenges));
   }, [challenges]);
 
   const addTransaction = (t: Transaction) => {
@@ -115,7 +114,7 @@ const App: React.FC = () => {
           🔐
         </div>
         <h2 className="text-2xl font-black uppercase tracking-widest mb-2">Vault Secured</h2>
-        <p className="text-emerald-200 text-sm mb-8 max-w-xs">Enter your security PIN to access Ziada</p>
+        <p className="text-emerald-200 text-sm mb-8 max-w-xs">Enter your security PIN to access Akiba</p>
         
         <form onSubmit={handleUnlock} className="w-full max-w-xs space-y-4">
           <input 
@@ -144,7 +143,7 @@ const App: React.FC = () => {
         <div className="w-32 h-32 bg-emerald-800 rounded-[40px] flex items-center justify-center text-6xl shadow-2xl mb-12 border-b-8 border-red-600">
           🇰🇪
         </div>
-        <h1 className="text-4xl font-black tracking-tighter uppercase mb-4">Welcome to Ziada</h1>
+        <h1 className="text-4xl font-black tracking-tighter uppercase mb-4">Welcome to Akiba</h1>
         <p className="text-gray-500 max-w-xs mb-12 font-medium leading-relaxed">
           The smart financial tracker designed for Kenyans. Track M-Pesa, maximize KRA refunds, and build wealth.
         </p>
@@ -186,7 +185,7 @@ const App: React.FC = () => {
       <header className="bg-emerald-800 text-white pt-6 pb-4 px-4 sm:px-8 shadow-md sticky top-0 z-50 border-b-4 border-red-600">
         <div className="max-w-5xl mx-auto flex justify-between items-end">
           <div className="flex-1">
-            <p className="text-emerald-100 text-[10px] font-black uppercase tracking-widest mb-1">Ziada 🇰🇪</p>
+            <p className="text-emerald-100 text-[10px] font-black uppercase tracking-widest mb-1">Akiba 🇰🇪</p>
             <h1 className="text-xl sm:text-2xl font-black tracking-tighter uppercase truncate max-w-[180px] sm:max-w-none">
               {profile.fullName ? profile.fullName.split(' ')[0] : t.citizen}
             </h1>

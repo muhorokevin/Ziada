@@ -1,7 +1,6 @@
-
 {
-  "name": "Ziada - Kenya",
-  "short_name": "Ziada",
+  "name": "Akiba - Kenya",
+  "short_name": "Akiba",
   "description": "Smart Kenyan expense and tax assistant with M-Pesa integration.",
   "start_url": "/",
   "display": "standalone",

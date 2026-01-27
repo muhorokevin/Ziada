@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Transaction, Category, UserProfile, Budget } from '../types';
 import { CURRENCY, TRANSLATIONS } from '../constants';
@@ -100,7 +99,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, profile, budgets = 
             <div className="space-y-1">
               <p className="text-emerald-500 text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
                 <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                Terminal Live
+                Akiba Live Terminal
               </p>
               <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest">{t.spending_total}</h2>
             </div>

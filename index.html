@@ -1,18 +1,18 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Ziada - Kenyan Expense & Tax Assistant</title>
+    <title>Akiba - Kenyan Expense & Tax Assistant</title>
     
     <!-- PWA / Mobile Readiness -->
     <meta name="theme-color" content="#065f46">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Ziada">
+    <meta name="apple-mobile-web-app-title" content="Akiba">
     
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/583/583985.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -54,14 +54,6 @@
 </head>
 <body class="bg-[#F8F9FA] text-gray-900 overflow-x-hidden selection:bg-emerald-200">
     <div id="root"></div>
-    <!-- Entry point for Vite -->
-    <script type="module" src="/index.tsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration failed:', err));
-        });
-      }
-    </script>
+    <script type="module" src="index.tsx"></script>
 </body>
 </html>

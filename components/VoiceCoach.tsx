@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI, Modality, FunctionDeclaration, Type, LiveServerMessage } from '@google/genai';
 import { Transaction, UserProfile, Category } from '../types';
@@ -195,7 +194,7 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
         config: {
           responseModalities: [Modality.AUDIO],
           tools: [{ functionDeclarations: [addTransactionFn] }],
-          systemInstruction: `You are Ziada AI Financial Coach. Help the user manage their Kenyan finances. 
+          systemInstruction: `You are Akiba AI Financial Coach. Help the user manage their Kenyan finances. 
           Use Kenyan context (KES, Naivas, M-Pesa). Talk about tax returns, KRA, and budgeting.
           
           You can help the user add transactions quickly. If they say something like "I spent 200 on lunch at Mama Mboga", use the addTransaction tool.

@@ -1,10 +1,9 @@
-
 /**
  * Simple obfuscation for local storage data. 
  * In a real-world enterprise app, we would use Web Crypto API with a PBKDF2 derived key.
  * This provides a layer of protection against casual inspection.
  */
-const SALT = "Ziada_Kenya_254";
+const SALT = "Akiba_Kenya_254";
 
 export const encryptData = (data: any): string => {
   const json = JSON.stringify(data);
