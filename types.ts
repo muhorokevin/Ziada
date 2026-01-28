@@ -1,14 +1,25 @@
 
 export enum Category {
   FOOD = 'Food & Groceries',
-  TRANSPORT = 'Transport',
+  TRANSPORT = 'Transport (Matatu/Boda)',
   RENT = 'Rent & Housing',
-  UTILITIES = 'Utilities',
-  BUSINESS = 'Business',
-  MEDICAL = 'Medical',
-  EDUCATION = 'Education',
-  CHURCH = 'Church/Giving',
-  PERSONAL = 'Personal/Lifestyle',
+  UTILITIES = 'Utilities (Tokens/Water)',
+  INTERNET = 'Internet & Airtime',
+  BUSINESS = 'Business Expenses',
+  MEDICAL = 'Medical & Health',
+  EDUCATION = 'Education & School Fees',
+  FAMILY = 'Family Support',
+  CHURCH = 'Church & Tithe',
+  PERSONAL = 'Personal Care',
+  SHOPPING = 'Shopping & Lifestyle',
+  INVESTMENTS = 'Investments',
+  LOANS = 'Loan Repayments',
+  CHAMA = 'Chama & Savings',
+  ENTERTAINMENT = 'Entertainment',
+  MPESA_CHARGES = 'M-Pesa Charges',
+  SALARY = 'Salary',
+  FREELANCE = 'Freelance/Gigs',
+  GIFT = 'Gift/Support',
   OTHER = 'Other'
 }
 
@@ -34,6 +45,7 @@ export interface UserProfile {
   insurancePremium?: number;
   mortgageInterest?: number;
   hasOnboarded?: boolean;
+  hasSeenGuide?: boolean;
 }
 
 export interface Budget {

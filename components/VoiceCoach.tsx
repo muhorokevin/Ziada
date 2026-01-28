@@ -134,12 +134,13 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
                   setTimeout(() => setLastAdded(null), 5000);
 
                   sessionPromise.then((session) => {
+                    // Fix: functionResponses should be a single object as per Live API guidelines, not an array
                     session.sendToolResponse({
-                      functionResponses: [{
+                      functionResponses: {
                         id: fc.id,
                         name: fc.name,
                         response: { result: "Transaction recorded successfully." },
-                      }]
+                      }
                     });
                   });
                 }

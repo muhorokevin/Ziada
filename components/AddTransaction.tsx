@@ -38,7 +38,6 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, lang }) => {
 
   return (
     <div className="space-y-6 sm:space-y-10 pb-12 animate-in slide-in-from-bottom-4 duration-500 max-w-3xl mx-auto">
-      {/* Method Selection - Responsive Tabs */}
       <div className="flex bg-gray-200 p-1.5 rounded-[28px] sm:rounded-[36px] gap-1 shadow-inner">
         <TabBtn active={method === 'manual'} onClick={() => setMethod('manual')} label={t.quick_cash} />
         <TabBtn active={method === 'receipt'} onClick={() => setMethod('receipt')} label={t.scan_receipt} />
@@ -51,7 +50,6 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, lang }) => {
 
         {method === 'manual' && (
           <div className="bg-white rounded-[40px] p-6 sm:p-10 shadow-sm border border-gray-100">
-            {/* Type Selector */}
             <div className="flex justify-center mb-8 sm:mb-12 bg-gray-50 p-2 rounded-2xl border border-gray-100 max-w-sm mx-auto">
               <button 
                 onClick={() => setManualType('expense')}
@@ -68,7 +66,6 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, lang }) => {
             </div>
 
             <form onSubmit={handleManualSubmit} className="space-y-6 sm:space-y-8">
-              {/* Amount Field - Prominent */}
               <div className="space-y-2 text-center">
                 <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest block">
                   {manualType === 'expense' ? t.spending_total : 'Total Inflow'} ({CURRENCY})
@@ -83,7 +80,6 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, lang }) => {
                 />
               </div>
 
-              {/* Responsive Grid for Details */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 pt-4">
                 <div className="space-y-2">
                   <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest px-2">
@@ -92,7 +88,7 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, lang }) => {
                   <input 
                     required
                     type="text"
-                    placeholder={manualType === 'expense' ? 'e.g. Mama Mboga' : 'e.g. Salary / Freelance Client'}
+                    placeholder={manualType === 'expense' ? 'e.g. Mama Mboga' : 'e.g. Salary'}
                     value={formData.merchant}
                     onChange={e => setFormData({...formData, merchant: e.target.value})}
                     className="w-full p-4 sm:p-5 bg-gray-50 border border-gray-100 rounded-[24px] focus:ring-4 focus:ring-emerald-100 outline-none font-bold text-gray-800"
@@ -100,9 +96,7 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, lang }) => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest px-2">
-                    {manualType === 'expense' ? 'Expense Category' : 'Income Stream'}
-                  </label>
+                  <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest px-2">Category</label>
                   <select 
                     value={formData.category}
                     onChange={e => setFormData({...formData, category: e.target.value as Category})}
@@ -118,9 +112,11 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, lang }) => {
                   <label className="text-[10px] sm:text-xs font-black text-gray-400 uppercase tracking-widest px-2">Transaction Date</label>
                   <input 
                     type="date"
+                    required
                     value={formData.date}
                     onChange={e => setFormData({...formData, date: e.target.value})}
-                    className="w-full p-4 sm:p-5 bg-gray-50 border border-gray-100 rounded-[24px] focus:ring-4 focus:ring-emerald-100 outline-none font-bold text-gray-800 block cursor-pointer"
+                    className="w-full p-4 sm:p-5 bg-gray-50 border border-gray-100 rounded-[24px] focus:ring-4 focus:ring-emerald-100 outline-none font-bold text-gray-800 block cursor-pointer appearance-none"
+                    style={{ minHeight: '64px' }}
                   />
                 </div>
               </div>

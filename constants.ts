@@ -8,7 +8,8 @@ export const KENYA_TAX_BANDS = [
 ];
 
 export const PERSONAL_RELIEF_MONTHLY = 2400;
-export const SHIF_RATE = 0.0275; // Social Health Insurance Fund
+export const SHIF_RATE = 0.0275; // Social Health Insurance Fund (2.75%)
+export const HOUSING_LEVY_RATE = 0.015; // Housing Levy (1.5%)
 
 export const CURRENCY = 'KES';
 
