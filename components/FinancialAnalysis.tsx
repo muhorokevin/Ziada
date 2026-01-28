@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Transaction, Category, Budget } from '../types';
+import { Transaction, ExpenseCategory, IncomeCategory, Category, Budget } from '../types';
 import { CURRENCY } from '../constants';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
@@ -17,7 +17,7 @@ const FinancialAnalysis: React.FC<FinancialAnalysisProps> = ({ transactions, bud
   const [activeView, setActiveView] = useState<'logs' | 'analysis' | 'budget'>('analysis');
   const [search, setSearch] = useState('');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-  const [editingBudget, setEditingBudget] = useState<Category | null>(null);
+  const [editingBudget, setEditingBudget] = useState<ExpenseCategory | null>(null);
 
   const now = new Date();
   const currentMonth = now.getMonth();
@@ -58,7 +58,7 @@ const FinancialAnalysis: React.FC<FinancialAnalysisProps> = ({ transactions, bud
     }
   };
 
-  const updateBudgetLimit = (category: Category, field: 'weeklyLimit' | 'monthlyLimit', value: number) => {
+  const updateBudgetLimit = (category: ExpenseCategory, field: 'weeklyLimit' | 'monthlyLimit', value: number) => {
     const exists = budgets.find(b => b.category === category);
     if (exists) {
       onUpdateBudgets(budgets.map(b => b.category === category ? { ...b, [field]: value } : b));
@@ -148,7 +148,7 @@ const FinancialAnalysis: React.FC<FinancialAnalysisProps> = ({ transactions, bud
           </section>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Object.values(Category).filter(cat => cat !== Category.SALARY && cat !== Category.FREELANCE).map(cat => {
+            {Object.values(ExpenseCategory).map(cat => {
               const budget = budgets.find(b => b.category === cat) || { category: cat, weeklyLimit: 0, monthlyLimit: 0 };
               const spentThisMonth = transactions.filter(t => t.category === cat && t.type === 'expense' && new Date(t.date).getMonth() === currentMonth).reduce((sum, t) => sum + t.amount, 0);
               const progress = budget.monthlyLimit > 0 ? (spentThisMonth / budget.monthlyLimit) * 100 : 0;
@@ -236,7 +236,10 @@ const FinancialAnalysis: React.FC<FinancialAnalysisProps> = ({ transactions, bud
               <div className="space-y-1">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Category</label>
                 <select value={editingTransaction.category} onChange={e => setEditingTransaction({...editingTransaction, category: e.target.value as Category})} className="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none font-bold">
-                  {Object.values(Category).map(c => <option key={c} value={c}>{c}</option>)}
+                  {editingTransaction.type === 'expense' 
+                    ? Object.values(ExpenseCategory).map(c => <option key={c} value={c}>{c}</option>)
+                    : Object.values(IncomeCategory).map(c => <option key={c} value={c}>{c}</option>)
+                  }
                 </select>
               </div>
               <button type="submit" className="w-full bg-black text-white py-5 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl active:scale-95 transition-all mt-4">Save Changes</button>

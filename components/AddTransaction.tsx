@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Transaction, Category } from '../types';
+import { Transaction, ExpenseCategory, IncomeCategory, Category } from '../types';
 import ReceiptScanner from './ReceiptScanner';
 import MpesaInput from './MpesaInput';
 import { CURRENCY, TRANSLATIONS } from '../constants';
@@ -17,7 +17,7 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, lang }) => {
   const [formData, setFormData] = useState({
     amount: '',
     merchant: '',
-    category: Category.OTHER,
+    category: 'Other' as Category,
     date: new Date().toISOString().split('T')[0],
   });
 
@@ -36,6 +36,10 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, lang }) => {
     });
   };
 
+  const categories = manualType === 'expense' 
+    ? Object.values(ExpenseCategory) 
+    : Object.values(IncomeCategory);
+
   return (
     <div className="space-y-6 sm:space-y-10 pb-12 animate-in slide-in-from-bottom-4 duration-500 max-w-3xl mx-auto">
       <div className="flex bg-gray-200 p-1.5 rounded-[28px] sm:rounded-[36px] gap-1 shadow-inner">
@@ -52,13 +56,13 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, lang }) => {
           <div className="bg-white rounded-[40px] p-6 sm:p-10 shadow-sm border border-gray-100">
             <div className="flex justify-center mb-8 sm:mb-12 bg-gray-50 p-2 rounded-2xl border border-gray-100 max-w-sm mx-auto">
               <button 
-                onClick={() => setManualType('expense')}
+                onClick={() => { setManualType('expense'); setFormData({...formData, category: ExpenseCategory.OTHER}); }}
                 className={`flex-1 py-3 px-6 rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all ${manualType === 'expense' ? 'bg-red-600 text-white shadow-lg' : 'text-gray-400'}`}
               >
                 Expense
               </button>
               <button 
-                onClick={() => setManualType('income')}
+                onClick={() => { setManualType('income'); setFormData({...formData, category: IncomeCategory.OTHER}); }}
                 className={`flex-1 py-3 px-6 rounded-xl font-black text-[10px] sm:text-xs uppercase tracking-widest transition-all ${manualType === 'income' ? 'bg-emerald-800 text-white shadow-lg' : 'text-gray-400'}`}
               >
                 Income
@@ -102,7 +106,7 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, lang }) => {
                     onChange={e => setFormData({...formData, category: e.target.value as Category})}
                     className="w-full p-4 sm:p-5 bg-gray-50 border border-gray-100 rounded-[24px] focus:ring-4 focus:ring-emerald-100 outline-none font-bold text-gray-800 appearance-none shadow-sm cursor-pointer"
                   >
-                    {Object.values(Category).map(cat => (
+                    {categories.map(cat => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>

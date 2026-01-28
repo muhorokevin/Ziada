@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { parseMpesaMessage } from '../services/geminiService';
-import { Transaction, Category } from '../types';
+import { Transaction, Category, ExpenseCategory, IncomeCategory } from '../types';
 
 interface MpesaInputProps {
   onAdd: (t: Transaction) => void;
@@ -21,7 +21,8 @@ const MpesaInput: React.FC<MpesaInputProps> = ({ onAdd }) => {
         date: result.date || new Date().toISOString().split('T')[0],
         merchant: result.merchant || 'M-Pesa Transaction',
         amount: result.amount || 0,
-        category: result.category as Category || Category.OTHER,
+        // Fixed: Use ExpenseCategory or IncomeCategory instead of Category type alias for default value
+        category: (result.category as Category) || (result.transactionType === 'income' ? IncomeCategory.OTHER : ExpenseCategory.OTHER),
         type: (result.transactionType === 'income' ? 'income' : 'expense'),
         source: 'mpesa'
       };

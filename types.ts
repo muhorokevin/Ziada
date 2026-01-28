@@ -1,5 +1,5 @@
 
-export enum Category {
+export enum ExpenseCategory {
   FOOD = 'Food & Groceries',
   TRANSPORT = 'Transport (Matatu/Boda)',
   RENT = 'Rent & Housing',
@@ -17,11 +17,20 @@ export enum Category {
   CHAMA = 'Chama & Savings',
   ENTERTAINMENT = 'Entertainment',
   MPESA_CHARGES = 'M-Pesa Charges',
+  OTHER = 'Other Expenses'
+}
+
+export enum IncomeCategory {
   SALARY = 'Salary',
   FREELANCE = 'Freelance/Gigs',
+  BUSINESS_REVENUE = 'Business Revenue',
   GIFT = 'Gift/Support',
-  OTHER = 'Other'
+  RENTAL_INCOME = 'Rental Income',
+  INTEREST = 'Interest & Dividends',
+  OTHER = 'Other Income'
 }
+
+export type Category = ExpenseCategory | IncomeCategory;
 
 export enum EmploymentType {
   SALARIED = 'Salaried Employee',
@@ -49,7 +58,7 @@ export interface UserProfile {
 }
 
 export interface Budget {
-  category: Category;
+  category: ExpenseCategory;
   weeklyLimit: number;
   monthlyLimit: number;
 }

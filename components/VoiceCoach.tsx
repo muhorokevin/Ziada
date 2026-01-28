@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { GoogleGenAI, Modality, FunctionDeclaration, Type, LiveServerMessage } from '@google/genai';
-import { Transaction, UserProfile, Category } from '../types';
+import { Transaction, UserProfile, ExpenseCategory, IncomeCategory, Category } from '../types';
 
 // Manual implementation of encode/decode for the Live API
 function encode(bytes: Uint8Array) {
@@ -55,6 +56,8 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
   const audioContextRef = useRef<AudioContext | null>(null);
   const nextStartTimeRef = useRef<number>(0);
 
+  const combinedCategories = [...Object.values(ExpenseCategory), ...Object.values(IncomeCategory)];
+
   const addTransactionFn: FunctionDeclaration = {
     name: 'addTransaction',
     parameters: {
@@ -66,8 +69,8 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
         type: { type: Type.STRING, enum: ['expense', 'income'], description: 'Whether this is an expense or income.' },
         category: { 
           type: Type.STRING, 
-          enum: Object.values(Category), 
-          description: 'The category of the transaction.' 
+          enum: combinedCategories, 
+          description: 'The category of the transaction. Use appropriate ones for expense vs income.' 
         },
       },
       required: ['merchant', 'amount', 'type', 'category'],
@@ -115,7 +118,6 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
             scriptProcessor.connect(inputCtx.destination);
           },
           onmessage: async (message: LiveServerMessage) => {
-            // Handle Tool Calls (Voice Transaction) with safety checks for TS
             if (message.toolCall && message.toolCall.functionCalls) {
               for (const fc of message.toolCall.functionCalls) {
                 if (fc.name === 'addTransaction') {
@@ -134,7 +136,6 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
                   setTimeout(() => setLastAdded(null), 5000);
 
                   sessionPromise.then((session) => {
-                    // Fix: functionResponses should be a single object as per Live API guidelines, not an array
                     session.sendToolResponse({
                       functionResponses: {
                         id: fc.id,
@@ -147,7 +148,6 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
               }
             }
 
-            // Safe access to audio parts with optional chaining for TS
             const audioData = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
             if (audioData) {
               setStatus('speaking');

@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { analyzeReceipt } from '../services/geminiService';
-import { Transaction, Category } from '../types';
+import { Transaction, Category, ExpenseCategory } from '../types';
 
 interface ReceiptScannerProps {
   onAdd: (t: Transaction) => void;
@@ -31,7 +31,8 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onAdd }) => {
           date: result.date || new Date().toISOString().split('T')[0],
           merchant: result.merchant || 'Unknown Merchant',
           amount: result.amount || 0,
-          category: result.category as Category || Category.OTHER,
+          // Fixed: Use ExpenseCategory.OTHER instead of Category.OTHER
+          category: (result.category as Category) || ExpenseCategory.OTHER,
           type: 'expense',
           source: 'receipt',
           vatAmount: result.vatAmount,

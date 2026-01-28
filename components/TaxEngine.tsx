@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { Transaction, Category, UserProfile } from '../types';
+import { Transaction, Category, UserProfile, ExpenseCategory } from '../types';
 import { KENYA_TAX_BANDS, CURRENCY, SHIF_RATE, HOUSING_LEVY_RATE, PERSONAL_RELIEF_MONTHLY } from '../constants';
 
 interface TaxEngineProps {
@@ -39,7 +39,8 @@ const TaxEngine: React.FC<TaxEngineProps> = ({ transactions, profile, lang, onNa
 
     // 4. Refund Potential from business expenses
     const bizExpenses = transactions
-      .filter(tr => tr.isBusiness || tr.category === Category.BUSINESS)
+      // Fixed: Use ExpenseCategory.BUSINESS instead of Category.BUSINESS
+      .filter(tr => tr.isBusiness || tr.category === ExpenseCategory.BUSINESS)
       .reduce((sum, tr) => sum + tr.amount, 0);
     const refundPotential = (bizExpenses / 12) * 0.16; // Simplified estimate
 

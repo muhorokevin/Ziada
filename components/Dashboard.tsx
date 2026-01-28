@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Transaction, Category, UserProfile, Budget } from '../types';
+import { Transaction, ExpenseCategory, IncomeCategory, Category, UserProfile, Budget } from '../types';
 import { CURRENCY, TRANSLATIONS } from '../constants';
 
 interface DashboardProps {
@@ -42,7 +43,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, profile, budgets = 
     ? ((currentMonthExpenses - lastMonthExpenses) / lastMonthExpenses) * 100 
     : 0;
 
-  const categoryTotals = Object.values(Category).map(cat => ({
+  const categoryTotals = Object.values(ExpenseCategory).map(cat => ({
     name: cat,
     value: transactions
       .filter(tr => tr.category === cat && tr.type === 'expense')
@@ -87,9 +88,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, profile, budgets = 
 
   return (
     <div className="space-y-6 lg:space-y-10 animate-in fade-in duration-500">
-      {/* 1. Futuristic Spending Terminal (Hero) */}
       <section className="bg-[#0A0D10] text-white rounded-[40px] p-6 sm:p-10 shadow-2xl relative overflow-hidden border border-emerald-900/50">
-        {/* Futuristic Background Accents */}
         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #065f46 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-600/10 blur-[100px] rounded-full"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-red-600/5 blur-[100px] rounded-full"></div>
@@ -117,7 +116,6 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, profile, budgets = 
             </div>
           </div>
 
-          {/* Grid Metrics (Stock-like) */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-white/5 pt-8">
             <MetricBox label="VELOCITY" value={`${CURRENCY} ${Math.round(dailyAverage).toLocaleString()}`} sub="PER DAY" />
             <MetricBox label="PROJECTION" value={`${CURRENCY} ${Math.round(projectedTotal).toLocaleString()}`} sub="BY MONTH END" trend={projectedTotal > (profile.monthlyIncome || 0) ? 'bad' : 'good'} />
@@ -136,7 +134,6 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, profile, budgets = 
         </div>
       </section>
 
-      {/* 2. Budget Progress - Dynamic Section */}
       {budgetSummary.length > 0 && (
         <section className="bg-white p-8 rounded-[40px] shadow-sm border border-gray-100">
           <div className="flex justify-between items-center mb-6 px-2">
@@ -167,7 +164,6 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, profile, budgets = 
         </section>
       )}
 
-      {/* 3. Insights Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
         <div 
           className="bg-white p-8 sm:p-10 rounded-[40px] shadow-sm border border-gray-100 flex flex-col justify-between group hover:border-emerald-700 hover:shadow-xl transition-all cursor-pointer" 
@@ -264,10 +260,15 @@ const MetricBox: React.FC<MetricBoxProps> = ({ label, value, sub, trend, variant
 
 const getCategoryEmoji = (cat: Category) => {
   const map: Record<string, string> = {
-    [Category.FOOD]: '🍲', [Category.TRANSPORT]: '🚕', [Category.RENT]: '🏠',
-    [Category.UTILITIES]: '⚡', [Category.BUSINESS]: '💼', [Category.MEDICAL]: '🏥',
-    [Category.EDUCATION]: '📚', [Category.CHURCH]: '⛪', [Category.PERSONAL]: '🛍️',
-    [Category.OTHER]: '📦'
+    [ExpenseCategory.FOOD]: '🍲', [ExpenseCategory.TRANSPORT]: '🚕', [ExpenseCategory.RENT]: '🏠',
+    [ExpenseCategory.UTILITIES]: '⚡', [ExpenseCategory.BUSINESS]: '💼', [ExpenseCategory.MEDICAL]: '🏥',
+    [ExpenseCategory.EDUCATION]: '📚', [ExpenseCategory.CHURCH]: '⛪', [ExpenseCategory.PERSONAL]: '🛍️',
+    [ExpenseCategory.INTERNET]: '📶', [ExpenseCategory.FAMILY]: '👨‍👩‍👧', [ExpenseCategory.SHOPPING]: '🛒',
+    [ExpenseCategory.INVESTMENTS]: '📈', [ExpenseCategory.LOANS]: '📉', [ExpenseCategory.CHAMA]: '🛖',
+    [ExpenseCategory.ENTERTAINMENT]: '🎬', [ExpenseCategory.MPESA_CHARGES]: '💸', [ExpenseCategory.OTHER]: '📦',
+    [IncomeCategory.SALARY]: '💰', [IncomeCategory.FREELANCE]: '💻', [IncomeCategory.BUSINESS_REVENUE]: '🏪',
+    [IncomeCategory.GIFT]: '🎁', [IncomeCategory.RENTAL_INCOME]: '🏢', [IncomeCategory.INTEREST]: '🏦',
+    [IncomeCategory.OTHER]: '📥'
   };
   return map[cat] || '📦';
 };
