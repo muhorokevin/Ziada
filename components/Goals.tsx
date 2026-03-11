@@ -19,12 +19,19 @@ const PRESET_TEMPLATES = [
   { id: 'plot_deposit', name: 'Plot Deposit', seed: 5000, increment: 500, weeks: 48, icon: '🏔️', desc: 'Saving for your first land.', color: 'amber' },
   { id: 'holiday', name: 'Diani Holiday', seed: 200, increment: 100, weeks: 16, icon: '🏖️', desc: 'Save for that beach trip.', color: 'red' },
   { id: 'business_cap', name: 'Business Capital', seed: 2000, increment: 0, weeks: 24, icon: '💼', desc: 'Start your own hustle.', color: 'indigo' },
+  { id: 'wedding', name: 'Wedding Fund', seed: 1000, increment: 200, weeks: 40, icon: '💍', desc: 'Save for the big day.', color: 'pink' },
+  { id: 'car_buy', name: 'Car Purchase', seed: 10000, increment: 1000, weeks: 52, icon: '🚗', desc: 'Your first ride.', color: 'slate' },
+  { id: 'retirement', name: 'Retirement Seed', seed: 500, increment: 50, weeks: 104, icon: '👴', desc: 'Long term wealth.', color: 'emerald' },
+  { id: 'tech_upgrade', name: 'Tech Upgrade', seed: 500, increment: 100, weeks: 12, icon: '💻', desc: 'Laptop or Phone.', color: 'blue' },
+  { id: 'medical', name: 'Medical Buffer', seed: 1000, increment: 0, weeks: 12, icon: '🏥', desc: 'Health security.', color: 'red' },
+  { id: 'furniture', name: 'Furniture Upgrade', seed: 2000, increment: 500, weeks: 8, icon: '🛋️', desc: 'Home comfort.', color: 'orange' },
 ];
 
 const Goals: React.FC<GoalsProps> = ({ transactions, profile, challenges, onUpdateChallenges, onUpdateGoals, lang }) => {
   const [newGoal, setNewGoal] = useState('');
   const [isCreatingChallenge, setIsCreatingChallenge] = useState(false);
   const [viewingChallenge, setViewingChallenge] = useState<SavingsChallenge | null>(null);
+  const [showTotals, setShowTotals] = useState(false);
   const [challengeForm, setChallengeForm] = useState({ name: 'Challenge', seed: 50, increment: 50, weeks: 52 });
   
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
@@ -155,14 +162,30 @@ const Goals: React.FC<GoalsProps> = ({ transactions, profile, challenges, onUpda
             </div>
             
             <div className="grid grid-cols-2 gap-4 mb-10">
-               <div className="bg-emerald-50 p-8 rounded-[40px] border border-emerald-100 text-center">
-                 <p className="text-[10px] font-black uppercase text-emerald-800 mb-2 tracking-widest">Progress</p>
-                 <p className="text-3xl font-black">{viewingChallenge.completedWeeks.length} / {viewingChallenge.durationWeeks}</p>
-               </div>
+               <button 
+                onClick={() => setShowTotals(!showTotals)}
+                className="bg-emerald-50 p-8 rounded-[40px] border border-emerald-100 text-center hover:bg-emerald-100 transition-all"
+               >
+                 <p className="text-[10px] font-black uppercase text-emerald-800 mb-2 tracking-widest">
+                   {showTotals ? 'Total Saved' : 'Progress'}
+                 </p>
+                 <p className="text-3xl font-black">
+                   {showTotals 
+                    ? `${CURRENCY} ${viewingChallenge.completedWeeks.reduce((sum, w) => sum + (viewingChallenge.seedAmount + (w - 1) * viewingChallenge.weeklyIncrement), 0).toLocaleString()}`
+                    : `${viewingChallenge.completedWeeks.length} / ${viewingChallenge.durationWeeks}`
+                   }
+                 </p>
+                 <p className="text-[8px] font-bold text-emerald-600 uppercase mt-2">Click to toggle</p>
+               </button>
                <div className="bg-gray-50 p-8 rounded-[40px] border border-gray-100 text-center">
-                 <p className="text-[10px] font-black uppercase text-gray-400 mb-2 tracking-widest">Next Target</p>
+                 <p className="text-[10px] font-black uppercase text-gray-400 mb-2 tracking-widest">
+                   {showTotals ? 'Final Goal' : 'Next Target'}
+                 </p>
                  <p className="text-3xl font-black text-emerald-800">
-                    {CURRENCY} {(viewingChallenge.seedAmount + (viewingChallenge.completedWeeks.length * viewingChallenge.weeklyIncrement)).toLocaleString()}
+                    {showTotals 
+                      ? `${CURRENCY} ${([...Array(viewingChallenge.durationWeeks)].reduce((sum, _, i) => sum + (viewingChallenge.seedAmount + i * viewingChallenge.weeklyIncrement), 0)).toLocaleString()}`
+                      : `${CURRENCY} ${(viewingChallenge.seedAmount + (viewingChallenge.completedWeeks.length * viewingChallenge.weeklyIncrement)).toLocaleString()}`
+                    }
                  </p>
                </div>
             </div>

@@ -2,8 +2,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { ExpenseCategory, IncomeCategory } from "../types";
 
-// Always use process.env.API_KEY directly and use named parameter in constructor
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Always use process.env.GEMINI_API_KEY directly and use named parameter in constructor
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export const analyzeReceipt = async (base64Image: string) => {
   const expenseCategories = Object.values(ExpenseCategory).join(', ');
@@ -72,6 +72,74 @@ export const parseMpesaMessage = async (text: string) => {
           category: { type: Type.STRING },
           referenceId: { type: Type.STRING }
         }
+      }
+    }
+  });
+
+  return JSON.parse(response.text || '{}');
+};
+
+export const parseMultipleMpesaMessages = async (text: string) => {
+  const expenseCategories = Object.values(ExpenseCategory).join(', ');
+  const incomeCategories = Object.values(IncomeCategory).join(', ');
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: `Analyze these Kenyan M-Pesa SMS messages and extract an array of structured data.
+    
+    Text to parse: "${text}"
+    
+    Available Expense Categories: ${expenseCategories}
+    Available Income Categories: ${incomeCategories}
+
+    Return JSON as an array of objects with fields: amount (number), merchant (string), date (string as YYYY-MM-DD), transactionType (expense/income), category (string), referenceId (string).`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            amount: { type: Type.NUMBER },
+            merchant: { type: Type.STRING },
+            date: { type: Type.STRING },
+            transactionType: { type: Type.STRING },
+            category: { type: Type.STRING },
+            referenceId: { type: Type.STRING }
+          },
+          required: ["amount", "merchant", "date", "transactionType", "category"]
+        }
+      }
+    }
+  });
+
+  return JSON.parse(response.text || '[]');
+};
+
+export const analyzeFinancialHealth = async (transactions: any[], profile: any) => {
+  const response = await ai.models.generateContent({
+    model: 'gemini-3-flash-preview',
+    contents: `As a Kenyan financial expert, analyze these transactions and user profile. 
+    Provide a financial health score (0-100), a summary of their current situation, and 3-5 actionable recommendations.
+    Consider Kenyan context (inflation, M-Pesa charges, Sacco benefits, etc.).
+    
+    Profile: ${JSON.stringify(profile)}
+    Recent Transactions: ${JSON.stringify(transactions.slice(0, 50))}
+    
+    Return JSON with fields: score (number), summary (string), recommendations (array of strings).`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          score: { type: Type.NUMBER },
+          summary: { type: Type.STRING },
+          recommendations: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING }
+          }
+        },
+        required: ["score", "summary", "recommendations"]
       }
     }
   });

@@ -7,10 +7,11 @@ import { CURRENCY, TRANSLATIONS } from '../constants';
 
 interface AddTransactionProps {
   onAdd: (t: Transaction) => void;
+  onBulkAdd?: (ts: Transaction[]) => void;
   lang: 'en' | 'sw';
 }
 
-const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, lang }) => {
+const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, onBulkAdd, lang }) => {
   const t = TRANSLATIONS[lang];
   const [method, setMethod] = useState<'receipt' | 'mpesa' | 'manual'>('manual');
   const [manualType, setManualType] = useState<'expense' | 'income'>('expense');
@@ -50,7 +51,7 @@ const AddTransaction: React.FC<AddTransactionProps> = ({ onAdd, lang }) => {
 
       <div className="w-full">
         {method === 'receipt' && <ReceiptScanner onAdd={onAdd} />}
-        {method === 'mpesa' && <MpesaInput onAdd={onAdd} />}
+        {method === 'mpesa' && <MpesaInput onAdd={onAdd} onBulkAdd={onBulkAdd} />}
 
         {method === 'manual' && (
           <div className="bg-white rounded-[40px] p-6 sm:p-10 shadow-sm border border-gray-100">

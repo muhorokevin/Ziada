@@ -41,6 +41,34 @@ export enum EmploymentType {
   OTHER = 'Other'
 }
 
+export interface Investment {
+  id: string;
+  name: string;
+  type: 'MMF' | 'Sacco' | 'Stocks' | 'M-Akiba' | 'Other';
+  institution: string;
+  balance: number;
+  lastUpdated: string;
+  expectedAnnualReturn?: number;
+}
+
+export interface Chama {
+  id: string;
+  name: string;
+  contributionAmount: number;
+  frequency: 'weekly' | 'monthly';
+  nextContributionDate: string;
+  totalContributed: number;
+  payoutAmount?: number;
+  payoutDate?: string;
+}
+
+export interface FinancialHealth {
+  score: number;
+  summary: string;
+  recommendations: string[];
+  lastAnalyzed: string;
+}
+
 export interface UserProfile {
   fullName: string;
   employmentType: EmploymentType;
@@ -55,6 +83,9 @@ export interface UserProfile {
   mortgageInterest?: number;
   hasOnboarded?: boolean;
   hasSeenGuide?: boolean;
+  investments?: Investment[];
+  chamas?: Chama[];
+  health?: FinancialHealth;
 }
 
 export interface Budget {

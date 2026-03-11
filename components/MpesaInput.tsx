@@ -1,13 +1,14 @@
 
 import React, { useState } from 'react';
-import { parseMpesaMessage } from '../services/geminiService';
+import { parseMultipleMpesaMessages } from '../services/geminiService';
 import { Transaction, Category, ExpenseCategory, IncomeCategory } from '../types';
 
 interface MpesaInputProps {
   onAdd: (t: Transaction) => void;
+  onBulkAdd?: (ts: Transaction[]) => void;
 }
 
-const MpesaInput: React.FC<MpesaInputProps> = ({ onAdd }) => {
+const MpesaInput: React.FC<MpesaInputProps> = ({ onAdd, onBulkAdd }) => {
   const [smsText, setSmsText] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -15,20 +16,25 @@ const MpesaInput: React.FC<MpesaInputProps> = ({ onAdd }) => {
     if (!smsText.trim()) return;
     setIsAnalyzing(true);
     try {
-      const result = await parseMpesaMessage(smsText);
-      const newTransaction: Transaction = {
+      const results = await parseMultipleMpesaMessages(smsText);
+      const newTransactions: Transaction[] = results.map((result: any) => ({
         id: result.referenceId || Math.random().toString(36).substr(2, 9),
         date: result.date || new Date().toISOString().split('T')[0],
         merchant: result.merchant || 'M-Pesa Transaction',
         amount: result.amount || 0,
-        // Fixed: Use ExpenseCategory or IncomeCategory instead of Category type alias for default value
         category: (result.category as Category) || (result.transactionType === 'income' ? IncomeCategory.OTHER : ExpenseCategory.OTHER),
         type: (result.transactionType === 'income' ? 'income' : 'expense'),
         source: 'mpesa'
-      };
-      onAdd(newTransaction);
+      }));
+
+      if (onBulkAdd) {
+        onBulkAdd(newTransactions);
+      } else {
+        newTransactions.forEach(t => onAdd(t));
+      }
+      
       setSmsText('');
-      alert('M-Pesa transaction recorded!');
+      alert(`${newTransactions.length} M-Pesa transactions recorded!`);
     } catch (err) {
       console.error(err);
       alert('Could not parse SMS. Please check format.');

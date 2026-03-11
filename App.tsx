@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Transaction, Category, UserProfile, EmploymentType, Budget, SavingsChallenge } from './types';
+import { Transaction, Category, UserProfile, EmploymentType, Budget, SavingsChallenge, Investment, Chama } from './types';
 import Dashboard from './components/Dashboard';
 import AddTransaction from './components/AddTransaction';
 import TaxEngine from './components/TaxEngine';
@@ -8,11 +8,13 @@ import VoiceCoach from './components/VoiceCoach';
 import Profile from './components/Profile';
 import FinancialAnalysis from './components/FinancialAnalysis';
 import Goals from './components/Goals';
+import InvestmentTracker from './components/InvestmentTracker';
+import ChamaManager from './components/ChamaManager';
 import { TRANSLATIONS } from './constants';
 import { encryptData, decryptData } from './utils/security';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'add' | 'tax' | 'coach' | 'analysis' | 'profile' | 'goals'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'add' | 'tax' | 'coach' | 'analysis' | 'profile' | 'goals' | 'investments' | 'chamas'>('home');
   const [lang, setLang] = useState<'en' | 'sw'>('en');
   const [isLocked, setIsLocked] = useState(false);
   const [pinInput, setPinInput] = useState('');
@@ -46,7 +48,9 @@ const App: React.FC = () => {
       avatar: 'lion',
       isPasswordEnabled: false,
       hasOnboarded: false,
-      hasSeenGuide: false
+      hasSeenGuide: false,
+      investments: [],
+      chamas: []
     }) : {
       fullName: '',
       employmentType: EmploymentType.OTHER,
@@ -55,7 +59,9 @@ const App: React.FC = () => {
       financialGoals: [],
       avatar: 'lion',
       hasOnboarded: false,
-      hasSeenGuide: false
+      hasSeenGuide: false,
+      investments: [],
+      chamas: []
     };
   });
 
@@ -97,6 +103,10 @@ const App: React.FC = () => {
     setTransactions(prev => [t, ...prev]);
   };
 
+  const addBulkTransactions = (ts: Transaction[]) => {
+    setTransactions(prev => [...ts, ...prev]);
+  };
+
   const updateTransaction = (updated: Transaction) => {
     setTransactions(prev => prev.map(t => t.id === updated.id ? updated : t));
   };
@@ -113,10 +123,17 @@ const App: React.FC = () => {
     setChallenges(newChallenges);
   };
 
+  const updateInvestments = (investments: Investment[]) => {
+    setProfile(prev => ({ ...prev, investments }));
+  };
+
+  const updateChamas = (chamas: Chama[]) => {
+    setProfile(prev => ({ ...prev, chamas }));
+  };
+
   const completeOnboarding = () => {
     setProfile(prev => ({ ...prev, hasOnboarded: true }));
     setShowWelcome(false);
-    // After welcome, the useEffect will trigger guide automatically
   };
 
   const closeGuide = () => {
@@ -170,14 +187,16 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'home': return <Dashboard transactions={transactions} profile={profile} budgets={budgets} onNavigate={setActiveTab} lang={lang} />;
-      case 'add': return <AddTransaction onAdd={(t) => { addTransaction(t); setActiveTab('home'); }} lang={lang} />;
+      case 'home': return <Dashboard transactions={transactions} profile={profile} budgets={budgets} onNavigate={setActiveTab} lang={lang} onUpdateProfile={setProfile} onUpdateTransaction={updateTransaction} onDeleteTransaction={deleteTransaction} />;
+      case 'add': return <AddTransaction onAdd={(t) => { addTransaction(t); setActiveTab('home'); }} onBulkAdd={(ts) => { addBulkTransactions(ts); setActiveTab('home'); }} lang={lang} />;
       case 'tax': return <TaxEngine transactions={transactions} profile={profile} lang={lang} onNavigate={setActiveTab} />;
       case 'coach': return <VoiceCoach transactions={transactions} profile={profile} onAddTransaction={addTransaction} />;
       case 'profile': return <Profile profile={profile} onSave={setProfile} lang={lang} onLangToggle={(l) => setLang(l)} />;
       case 'analysis': return <FinancialAnalysis transactions={transactions} budgets={budgets} onUpdateBudgets={updateBudgets} onUpdateTransaction={updateTransaction} onDeleteTransaction={deleteTransaction} lang={lang} />;
       case 'goals': return <Goals transactions={transactions} profile={profile} challenges={challenges} onUpdateChallenges={updateChallenges} onUpdateGoals={(g) => setProfile({...profile, financialGoals: g})} lang={lang} />;
-      default: return <Dashboard transactions={transactions} profile={profile} budgets={budgets} onNavigate={setActiveTab} lang={lang} />;
+      case 'investments': return <InvestmentTracker profile={profile} onUpdateInvestments={updateInvestments} />;
+      case 'chamas': return <ChamaManager profile={profile} onUpdateChamas={updateChamas} />;
+      default: return <Dashboard transactions={transactions} profile={profile} budgets={budgets} onNavigate={setActiveTab} lang={lang} onUpdateProfile={setProfile} onUpdateTransaction={updateTransaction} onDeleteTransaction={deleteTransaction} />;
     }
   };
 
