@@ -3,6 +3,7 @@ import { Wallet, WalletTransaction } from '../types';
 import { CURRENCY } from '../constants';
 import { db, auth } from '../firebase';
 import { collection, addDoc, doc, setDoc, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from '../utils/firestoreError';
 
 interface WalletProps {
   wallet: Wallet;
@@ -19,11 +20,12 @@ const WalletComponent: React.FC<WalletProps> = ({ wallet, userId }) => {
   const [status, setStatus] = useState<{ type: 'success' | 'error' | 'info', msg: string } | null>(null);
 
   useEffect(() => {
-    const txRef = collection(db, 'users', userId, 'wallet_transactions');
+    const txPath = `users/${userId}/wallet_transactions`;
+    const txRef = collection(db, txPath);
     const q = query(txRef, orderBy('date', 'desc'), limit(10));
     const unsub = onSnapshot(q, (snapshot) => {
       setTransactions(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as WalletTransaction)));
-    });
+    }, (e) => handleFirestoreError(e, OperationType.GET, txPath));
     return () => unsub();
   }, [userId]);
 
@@ -48,8 +50,10 @@ const WalletComponent: React.FC<WalletProps> = ({ wallet, userId }) => {
       };
 
       try {
-        await addDoc(collection(db, 'users', userId, 'wallet_transactions'), tx);
-        await setDoc(doc(db, 'users', userId, 'wallet', 'main'), {
+        const txPath = `users/${userId}/wallet_transactions`;
+        const walletPath = `users/${userId}/wallet/main`;
+        await addDoc(collection(db, txPath), tx);
+        await setDoc(doc(db, walletPath), {
           ...wallet,
           balance: newBalance,
           lastUpdated: new Date().toISOString()
@@ -59,6 +63,7 @@ const WalletComponent: React.FC<WalletProps> = ({ wallet, userId }) => {
         setPhoneNumber('');
         setIsDepositing(false);
       } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, 'deposit-transaction');
         setStatus({ type: 'error', msg: 'Transaction failed. Please try again.' });
         setIsDepositing(false);
       }
@@ -88,8 +93,10 @@ const WalletComponent: React.FC<WalletProps> = ({ wallet, userId }) => {
       };
 
       try {
-        await addDoc(collection(db, 'users', userId, 'wallet_transactions'), tx);
-        await setDoc(doc(db, 'users', userId, 'wallet', 'main'), {
+        const txPath = `users/${userId}/wallet_transactions`;
+        const walletPath = `users/${userId}/wallet/main`;
+        await addDoc(collection(db, txPath), tx);
+        await setDoc(doc(db, walletPath), {
           ...wallet,
           balance: newBalance,
           lastUpdated: new Date().toISOString()
@@ -99,6 +106,7 @@ const WalletComponent: React.FC<WalletProps> = ({ wallet, userId }) => {
         setRecipient('');
         setIsSending(false);
       } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, 'send-transaction');
         setStatus({ type: 'error', msg: 'Transfer failed' });
         setIsSending(false);
       }

@@ -68,6 +68,19 @@
         "reference": { "type": "string" },
         "phoneNumber": { "type": "string" }
       }
+    },
+    "SavingsChallenge": {
+      "title": "SavingsChallenge",
+      "description": "A weekly savings challenge",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "seedAmount": { "type": "number" },
+        "weeklyIncrement": { "type": "number" },
+        "durationWeeks": { "type": "number" },
+        "startDate": { "type": "string" },
+        "completedWeeks": { "type": "array", "items": { "type": "number" } }
+      }
     }
   },
   "firestore": {
@@ -82,6 +95,10 @@
     "/users/{userId}/budgets/{budgetId}": {
       "schema": "Budget",
       "description": "User budgets"
+    },
+    "/users/{userId}/challenges/{challengeId}": {
+      "schema": "SavingsChallenge",
+      "description": "User savings challenges"
     },
     "/users/{userId}/wallet/main": {
       "schema": "Wallet",

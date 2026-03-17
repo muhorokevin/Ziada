@@ -16,6 +16,7 @@ import { encryptData, decryptData } from './utils/security';
 import { auth, db } from './firebase';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { doc, onSnapshot, setDoc, collection, query, orderBy, getDoc, getDocs, deleteDoc, addDoc } from 'firebase/firestore';
+import { handleFirestoreError, OperationType } from './utils/firestoreError';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'home' | 'add' | 'tax' | 'coach' | 'analysis' | 'profile' | 'goals' | 'investments' | 'chamas' | 'wallet'>('home');
@@ -57,47 +58,52 @@ const App: React.FC = () => {
     if (!user) return;
 
     // Sync Profile
-    const profileRef = doc(db, 'users', user.uid);
+    const profilePath = `users/${user.uid}`;
+    const profileRef = doc(db, profilePath);
     const unsubProfile = onSnapshot(profileRef, (doc) => {
       if (doc.exists()) {
         setProfile(doc.data() as UserProfile);
       } else {
         // Initialize profile if it doesn't exist
-        setDoc(profileRef, profile);
+        setDoc(profileRef, profile).catch(e => handleFirestoreError(e, OperationType.WRITE, profilePath));
       }
-    });
+    }, (e) => handleFirestoreError(e, OperationType.GET, profilePath));
 
     // Sync Transactions
-    const txRef = collection(db, 'users', user.uid, 'transactions');
+    const txPath = `users/${user.uid}/transactions`;
+    const txRef = collection(db, txPath);
     const qTx = query(txRef, orderBy('date', 'desc'));
     const unsubTx = onSnapshot(qTx, (snapshot) => {
       const txs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Transaction));
       setTransactions(txs);
-    });
+    }, (e) => handleFirestoreError(e, OperationType.GET, txPath));
 
     // Sync Budgets
-    const budgetRef = collection(db, 'users', user.uid, 'budgets');
+    const budgetPath = `users/${user.uid}/budgets`;
+    const budgetRef = collection(db, budgetPath);
     const unsubBudget = onSnapshot(budgetRef, (snapshot) => {
       const bgs = snapshot.docs.map(d => d.data() as Budget);
       setBudgets(bgs);
-    });
+    }, (e) => handleFirestoreError(e, OperationType.GET, budgetPath));
 
     // Sync Challenges
-    const challengeRef = collection(db, 'users', user.uid, 'challenges');
+    const challengePath = `users/${user.uid}/challenges`;
+    const challengeRef = collection(db, challengePath);
     const unsubChallenge = onSnapshot(challengeRef, (snapshot) => {
       const chs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as SavingsChallenge));
       setChallenges(chs);
-    });
+    }, (e) => handleFirestoreError(e, OperationType.GET, challengePath));
 
     // Sync Wallet
-    const walletRef = doc(db, 'users', user.uid, 'wallet', 'main');
+    const walletPath = `users/${user.uid}/wallet/main`;
+    const walletRef = doc(db, walletPath);
     const unsubWallet = onSnapshot(walletRef, (doc) => {
       if (doc.exists()) {
         setWallet(doc.data() as Wallet);
       } else {
-        setDoc(walletRef, wallet);
+        setDoc(walletRef, wallet).catch(e => handleFirestoreError(e, OperationType.WRITE, walletPath));
       }
-    });
+    }, (e) => handleFirestoreError(e, OperationType.GET, walletPath));
 
     return () => {
       unsubProfile();
@@ -144,42 +150,69 @@ const App: React.FC = () => {
 
   const addTransaction = async (t: Transaction) => {
     if (!user) return;
-    const txRef = doc(collection(db, 'users', user.uid, 'transactions'));
-    await setDoc(txRef, { ...t, id: txRef.id });
+    const path = `users/${user.uid}/transactions`;
+    try {
+      const txRef = doc(collection(db, path));
+      await setDoc(txRef, { ...t, id: txRef.id });
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, path);
+    }
   };
 
   const addBulkTransactions = async (ts: Transaction[]) => {
     if (!user) return;
-    for (const t of ts) {
-      const txRef = doc(collection(db, 'users', user.uid, 'transactions'));
-      await setDoc(txRef, { ...t, id: txRef.id });
+    const path = `users/${user.uid}/transactions`;
+    try {
+      for (const t of ts) {
+        const txRef = doc(collection(db, path));
+        await setDoc(txRef, { ...t, id: txRef.id });
+      }
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, path);
     }
   };
 
   const updateTransaction = async (updated: Transaction) => {
     if (!user) return;
-    await setDoc(doc(db, 'users', user.uid, 'transactions', updated.id), updated);
+    const path = `users/${user.uid}/transactions/${updated.id}`;
+    try {
+      await setDoc(doc(db, path), updated);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, path);
+    }
   };
 
   const deleteTransaction = async (id: string) => {
     if (!user) return;
-    await deleteDoc(doc(db, 'users', user.uid, 'transactions', id));
+    const path = `users/${user.uid}/transactions/${id}`;
+    try {
+      await deleteDoc(doc(db, path));
+    } catch (e) {
+      handleFirestoreError(e, OperationType.DELETE, path);
+    }
   };
 
   const updateBudgets = async (newBudgets: Budget[]) => {
     if (!user) return;
-    // This is simplified, usually you'd update specific ones
-    for (const b of newBudgets) {
-      await setDoc(doc(db, 'users', user.uid, 'budgets', b.category), b);
+    const pathPrefix = `users/${user.uid}/budgets`;
+    try {
+      for (const b of newBudgets) {
+        await setDoc(doc(db, `${pathPrefix}/${b.category}`), b);
+      }
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, pathPrefix);
     }
   };
 
   const updateChallenges = async (newChallenges: SavingsChallenge[]) => {
     if (!user) return;
-    // For simplicity, we'll just handle the diff in the UI or specific methods
-    // But let's implement a basic sync
-    for (const ch of newChallenges) {
-      await setDoc(doc(db, 'users', user.uid, 'challenges', ch.id), ch);
+    const pathPrefix = `users/${user.uid}/challenges`;
+    try {
+      for (const ch of newChallenges) {
+        await setDoc(doc(db, `${pathPrefix}/${ch.id}`), ch);
+      }
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, pathPrefix);
     }
   };
 
@@ -200,39 +233,57 @@ const App: React.FC = () => {
       ? [...challenge.completedWeeks, week]
       : challenge.completedWeeks.filter(w => w !== week);
 
-    // Update Challenge
-    await setDoc(doc(db, 'users', user.uid, 'challenges', challengeId), {
-      ...challenge,
-      completedWeeks: newCompleted
-    });
+    const challengePath = `users/${user.uid}/challenges/${challengeId}`;
+    const walletPath = `users/${user.uid}/wallet/main`;
+    const walletTxPath = `users/${user.uid}/wallet_transactions`;
 
-    // Update Wallet
-    const newBalance = isCompleting ? wallet.balance - amount : wallet.balance + amount;
-    await setDoc(doc(db, 'users', user.uid, 'wallet', 'main'), {
-      ...wallet,
-      balance: newBalance,
-      lastUpdated: new Date().toISOString()
-    });
+    try {
+      // Update Challenge
+      await setDoc(doc(db, challengePath), {
+        ...challenge,
+        completedWeeks: newCompleted
+      });
 
-    // Log Wallet Transaction
-    await addDoc(collection(db, 'users', user.uid, 'wallet_transactions'), {
-      date: new Date().toISOString(),
-      amount,
-      type: isCompleting ? 'payment' : 'deposit',
-      status: 'completed',
-      description: `${isCompleting ? 'Saved for' : 'Refund from'} ${challenge.name} - Week ${week}`,
-      reference: 'CH' + Math.random().toString(36).substring(7).toUpperCase()
-    });
+      // Update Wallet
+      const newBalance = isCompleting ? wallet.balance - amount : wallet.balance + amount;
+      await setDoc(doc(db, walletPath), {
+        ...wallet,
+        balance: newBalance,
+        lastUpdated: new Date().toISOString()
+      });
+
+      // Log Wallet Transaction
+      await addDoc(collection(db, walletTxPath), {
+        date: new Date().toISOString(),
+        amount,
+        type: isCompleting ? 'payment' : 'deposit',
+        status: 'completed',
+        description: `${isCompleting ? 'Saved for' : 'Refund from'} ${challenge.name} - Week ${week}`,
+        reference: 'CH' + Math.random().toString(36).substring(7).toUpperCase()
+      });
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, 'multiple-paths');
+    }
   };
 
   const updateInvestments = async (investments: Investment[]) => {
     if (!user) return;
-    await setDoc(doc(db, 'users', user.uid), { ...profile, investments }, { merge: true });
+    const path = `users/${user.uid}`;
+    try {
+      await setDoc(doc(db, path), { ...profile, investments }, { merge: true });
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, path);
+    }
   };
 
   const updateChamas = async (chamas: Chama[]) => {
     if (!user) return;
-    await setDoc(doc(db, 'users', user.uid), { ...profile, chamas }, { merge: true });
+    const path = `users/${user.uid}`;
+    try {
+      await setDoc(doc(db, path), { ...profile, chamas }, { merge: true });
+    } catch (e) {
+      handleFirestoreError(e, OperationType.WRITE, path);
+    }
   };
 
   const handleLogin = async () => {
