@@ -81,7 +81,14 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
     setStatus('connecting');
     setIsActive(true);
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      alert("GEMINI_API_KEY is not set. Please configure it in your environment.");
+      setStatus('idle');
+      setIsActive(false);
+      return;
+    }
+    const ai = new GoogleGenAI({ apiKey });
     
     try {
       const inputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
@@ -97,7 +104,7 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
             setStatus('listening');
             const source = inputCtx.createMediaStreamSource(stream);
             const scriptProcessor = inputCtx.createScriptProcessor(4096, 1, 1);
-            scriptProcessor.onaudioprocess = (e) => {
+            scriptProcessor.onaudioprocess = (e: AudioProcessingEvent) => {
               const inputData = e.inputBuffer.getChannelData(0);
               const l = inputData.length;
               const int16 = new Int16Array(l);
@@ -183,7 +190,7 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
               nextStartTimeRef.current = 0;
             }
           },
-          onerror: (e) => {
+          onerror: (e: any) => {
             console.error('Live API Error:', e);
             setStatus('idle');
           },

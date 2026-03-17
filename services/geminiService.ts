@@ -2,10 +2,21 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { ExpenseCategory, IncomeCategory } from "../types";
 
-// Always use process.env.GEMINI_API_KEY directly and use named parameter in constructor
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+
+const getAI = () => {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is not set. Please configure it in your environment.");
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+};
 
 export const analyzeReceipt = async (base64Image: string) => {
+  const ai = getAI();
   const expenseCategories = Object.values(ExpenseCategory).join(', ');
 
   const response = await ai.models.generateContent({
@@ -41,6 +52,7 @@ export const analyzeReceipt = async (base64Image: string) => {
 };
 
 export const parseMpesaMessage = async (text: string) => {
+  const ai = getAI();
   const expenseCategories = Object.values(ExpenseCategory).join(', ');
   const incomeCategories = Object.values(IncomeCategory).join(', ');
 
