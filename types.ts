@@ -104,6 +104,23 @@ export interface SavingsChallenge {
   completedWeeks: number[]; // 1-indexed week numbers
 }
 
+export interface Wallet {
+  balance: number;
+  currency: string;
+  lastUpdated: string;
+}
+
+export interface WalletTransaction {
+  id: string;
+  date: string;
+  amount: number;
+  type: 'deposit' | 'withdrawal' | 'transfer' | 'payment';
+  status: 'pending' | 'completed' | 'failed';
+  description: string;
+  reference?: string; // M-Pesa Receipt Number
+  phoneNumber?: string;
+}
+
 export interface Transaction {
   id: string;
   date: string;

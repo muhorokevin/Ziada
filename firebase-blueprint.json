@@ -1,0 +1,95 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile and settings",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string" },
+        "employmentType": { "type": "string" },
+        "monthlyIncome": { "type": "number" },
+        "industry": { "type": "string" },
+        "kraPin": { "type": "string" },
+        "financialGoals": { "type": "array", "items": { "type": "string" } },
+        "avatar": { "type": "string" },
+        "isPasswordEnabled": { "type": "boolean" },
+        "password": { "type": "string" },
+        "insurancePremium": { "type": "number" },
+        "mortgageInterest": { "type": "number" },
+        "hasOnboarded": { "type": "boolean" },
+        "hasSeenGuide": { "type": "boolean" }
+      }
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Financial transaction for tracking",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "merchant": { "type": "string" },
+        "amount": { "type": "number" },
+        "category": { "type": "string" },
+        "type": { "type": "string", "enum": ["expense", "income"] },
+        "source": { "type": "string", "enum": ["mpesa", "receipt", "manual"] },
+        "vatAmount": { "type": "number" },
+        "isBusiness": { "type": "boolean" }
+      }
+    },
+    "Budget": {
+      "title": "Budget",
+      "description": "Budget limit for a category",
+      "type": "object",
+      "properties": {
+        "category": { "type": "string" },
+        "weeklyLimit": { "type": "number" },
+        "monthlyLimit": { "type": "number" }
+      }
+    },
+    "Wallet": {
+      "title": "Wallet",
+      "description": "User's virtual wallet balance",
+      "type": "object",
+      "properties": {
+        "balance": { "type": "number" },
+        "currency": { "type": "string" },
+        "lastUpdated": { "type": "string" }
+      }
+    },
+    "WalletTransaction": {
+      "title": "WalletTransaction",
+      "description": "A real money transaction in the wallet",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["deposit", "withdrawal", "transfer", "payment"] },
+        "status": { "type": "string", "enum": ["pending", "completed", "failed"] },
+        "description": { "type": "string" },
+        "reference": { "type": "string" },
+        "phoneNumber": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile document"
+    },
+    "/users/{userId}/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Tracked transactions"
+    },
+    "/users/{userId}/budgets/{budgetId}": {
+      "schema": "Budget",
+      "description": "User budgets"
+    },
+    "/users/{userId}/wallet/main": {
+      "schema": "Wallet",
+      "description": "Main wallet balance"
+    },
+    "/users/{userId}/wallet_transactions/{txId}": {
+      "schema": "WalletTransaction",
+      "description": "History of wallet transactions"
+    }
+  }
+}

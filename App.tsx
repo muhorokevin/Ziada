@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Transaction, Category, UserProfile, EmploymentType, Budget, SavingsChallenge, Investment, Chama } from './types';
+import { Transaction, Category, UserProfile, EmploymentType, Budget, SavingsChallenge, Investment, Chama, Wallet } from './types';
 import Dashboard from './components/Dashboard';
 import AddTransaction from './components/AddTransaction';
 import TaxEngine from './components/TaxEngine';
@@ -10,60 +10,103 @@ import FinancialAnalysis from './components/FinancialAnalysis';
 import Goals from './components/Goals';
 import InvestmentTracker from './components/InvestmentTracker';
 import ChamaManager from './components/ChamaManager';
+import WalletComponent from './components/Wallet';
 import { TRANSLATIONS } from './constants';
 import { encryptData, decryptData } from './utils/security';
+import { auth, db } from './firebase';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
+import { doc, onSnapshot, setDoc, collection, query, orderBy, getDoc, getDocs, deleteDoc, addDoc } from 'firebase/firestore';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'home' | 'add' | 'tax' | 'coach' | 'analysis' | 'profile' | 'goals' | 'investments' | 'chamas'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'add' | 'tax' | 'coach' | 'analysis' | 'profile' | 'goals' | 'investments' | 'chamas' | 'wallet'>('home');
   const [lang, setLang] = useState<'en' | 'sw'>('en');
   const [isLocked, setIsLocked] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [showWelcome, setShowWelcome] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [guideStep, setGuideStep] = useState(0);
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
   
-  const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const saved = localStorage.getItem('akiba_tx_secure');
-    return saved ? (decryptData(saved) || []) : [];
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [challenges, setChallenges] = useState<SavingsChallenge[]>([]);
+  const [profile, setProfile] = useState<UserProfile>({
+    fullName: '',
+    employmentType: EmploymentType.OTHER,
+    monthlyIncome: 0,
+    industry: 'Other',
+    financialGoals: [],
+    avatar: 'lion',
+    hasOnboarded: false,
+    hasSeenGuide: false,
+    investments: [],
+    chamas: []
   });
-  
-  const [budgets, setBudgets] = useState<Budget[]>(() => {
-    const saved = localStorage.getItem('akiba_bg_secure');
-    return saved ? (decryptData(saved) || []) : [];
-  });
+  const [wallet, setWallet] = useState<Wallet>({ balance: 0, currency: 'KES', lastUpdated: new Date().toISOString() });
 
-  const [challenges, setChallenges] = useState<SavingsChallenge[]>(() => {
-    const saved = localStorage.getItem('akiba_ch_secure');
-    return saved ? (decryptData(saved) || []) : [];
-  });
-  
-  const [profile, setProfile] = useState<UserProfile>(() => {
-    const saved = localStorage.getItem('akiba_pr_secure');
-    return saved ? (decryptData(saved) || {
-      fullName: '',
-      employmentType: EmploymentType.OTHER,
-      monthlyIncome: 0,
-      industry: 'Other',
-      financialGoals: [],
-      avatar: 'lion',
-      isPasswordEnabled: false,
-      hasOnboarded: false,
-      hasSeenGuide: false,
-      investments: [],
-      chamas: []
-    }) : {
-      fullName: '',
-      employmentType: EmploymentType.OTHER,
-      monthlyIncome: 0,
-      industry: 'Other',
-      financialGoals: [],
-      avatar: 'lion',
-      hasOnboarded: false,
-      hasSeenGuide: false,
-      investments: [],
-      chamas: []
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setIsAuthReady(true);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    // Sync Profile
+    const profileRef = doc(db, 'users', user.uid);
+    const unsubProfile = onSnapshot(profileRef, (doc) => {
+      if (doc.exists()) {
+        setProfile(doc.data() as UserProfile);
+      } else {
+        // Initialize profile if it doesn't exist
+        setDoc(profileRef, profile);
+      }
+    });
+
+    // Sync Transactions
+    const txRef = collection(db, 'users', user.uid, 'transactions');
+    const qTx = query(txRef, orderBy('date', 'desc'));
+    const unsubTx = onSnapshot(qTx, (snapshot) => {
+      const txs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Transaction));
+      setTransactions(txs);
+    });
+
+    // Sync Budgets
+    const budgetRef = collection(db, 'users', user.uid, 'budgets');
+    const unsubBudget = onSnapshot(budgetRef, (snapshot) => {
+      const bgs = snapshot.docs.map(d => d.data() as Budget);
+      setBudgets(bgs);
+    });
+
+    // Sync Challenges
+    const challengeRef = collection(db, 'users', user.uid, 'challenges');
+    const unsubChallenge = onSnapshot(challengeRef, (snapshot) => {
+      const chs = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as SavingsChallenge));
+      setChallenges(chs);
+    });
+
+    // Sync Wallet
+    const walletRef = doc(db, 'users', user.uid, 'wallet', 'main');
+    const unsubWallet = onSnapshot(walletRef, (doc) => {
+      if (doc.exists()) {
+        setWallet(doc.data() as Wallet);
+      } else {
+        setDoc(walletRef, wallet);
+      }
+    });
+
+    return () => {
+      unsubProfile();
+      unsubTx();
+      unsubBudget();
+      unsubChallenge();
+      unsubWallet();
     };
-  });
+  }, [user]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -99,36 +142,111 @@ const App: React.FC = () => {
     localStorage.setItem('akiba_ch_secure', encryptData(challenges));
   }, [challenges]);
 
-  const addTransaction = (t: Transaction) => {
-    setTransactions(prev => [t, ...prev]);
+  const addTransaction = async (t: Transaction) => {
+    if (!user) return;
+    const txRef = doc(collection(db, 'users', user.uid, 'transactions'));
+    await setDoc(txRef, { ...t, id: txRef.id });
   };
 
-  const addBulkTransactions = (ts: Transaction[]) => {
-    setTransactions(prev => [...ts, ...prev]);
+  const addBulkTransactions = async (ts: Transaction[]) => {
+    if (!user) return;
+    for (const t of ts) {
+      const txRef = doc(collection(db, 'users', user.uid, 'transactions'));
+      await setDoc(txRef, { ...t, id: txRef.id });
+    }
   };
 
-  const updateTransaction = (updated: Transaction) => {
-    setTransactions(prev => prev.map(t => t.id === updated.id ? updated : t));
+  const updateTransaction = async (updated: Transaction) => {
+    if (!user) return;
+    await setDoc(doc(db, 'users', user.uid, 'transactions', updated.id), updated);
   };
 
-  const deleteTransaction = (id: string) => {
-    setTransactions(prev => prev.filter(t => t.id !== id));
+  const deleteTransaction = async (id: string) => {
+    if (!user) return;
+    await deleteDoc(doc(db, 'users', user.uid, 'transactions', id));
   };
 
-  const updateBudgets = (newBudgets: Budget[]) => {
-    setBudgets(newBudgets);
+  const updateBudgets = async (newBudgets: Budget[]) => {
+    if (!user) return;
+    // This is simplified, usually you'd update specific ones
+    for (const b of newBudgets) {
+      await setDoc(doc(db, 'users', user.uid, 'budgets', b.category), b);
+    }
   };
 
-  const updateChallenges = (newChallenges: SavingsChallenge[]) => {
-    setChallenges(newChallenges);
+  const updateChallenges = async (newChallenges: SavingsChallenge[]) => {
+    if (!user) return;
+    // For simplicity, we'll just handle the diff in the UI or specific methods
+    // But let's implement a basic sync
+    for (const ch of newChallenges) {
+      await setDoc(doc(db, 'users', user.uid, 'challenges', ch.id), ch);
+    }
   };
 
-  const updateInvestments = (investments: Investment[]) => {
-    setProfile(prev => ({ ...prev, investments }));
+  const toggleChallengeWeek = async (challengeId: string, week: number) => {
+    if (!user) return;
+    const challenge = challenges.find(c => c.id === challengeId);
+    if (!challenge) return;
+
+    const isCompleting = !challenge.completedWeeks.includes(week);
+    const amount = challenge.seedAmount + (week - 1) * challenge.weeklyIncrement;
+
+    if (isCompleting && wallet.balance < amount) {
+      alert(`Insufficient wallet balance! You need ${amount} KES to save for Week ${week}.`);
+      return;
+    }
+
+    const newCompleted = isCompleting 
+      ? [...challenge.completedWeeks, week]
+      : challenge.completedWeeks.filter(w => w !== week);
+
+    // Update Challenge
+    await setDoc(doc(db, 'users', user.uid, 'challenges', challengeId), {
+      ...challenge,
+      completedWeeks: newCompleted
+    });
+
+    // Update Wallet
+    const newBalance = isCompleting ? wallet.balance - amount : wallet.balance + amount;
+    await setDoc(doc(db, 'users', user.uid, 'wallet', 'main'), {
+      ...wallet,
+      balance: newBalance,
+      lastUpdated: new Date().toISOString()
+    });
+
+    // Log Wallet Transaction
+    await addDoc(collection(db, 'users', user.uid, 'wallet_transactions'), {
+      date: new Date().toISOString(),
+      amount,
+      type: isCompleting ? 'payment' : 'deposit',
+      status: 'completed',
+      description: `${isCompleting ? 'Saved for' : 'Refund from'} ${challenge.name} - Week ${week}`,
+      reference: 'CH' + Math.random().toString(36).substring(7).toUpperCase()
+    });
   };
 
-  const updateChamas = (chamas: Chama[]) => {
-    setProfile(prev => ({ ...prev, chamas }));
+  const updateInvestments = async (investments: Investment[]) => {
+    if (!user) return;
+    await setDoc(doc(db, 'users', user.uid), { ...profile, investments }, { merge: true });
+  };
+
+  const updateChamas = async (chamas: Chama[]) => {
+    if (!user) return;
+    await setDoc(doc(db, 'users', user.uid), { ...profile, chamas }, { merge: true });
+  };
+
+  const handleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    setActiveTab('home');
   };
 
   const completeOnboarding = () => {
@@ -153,6 +271,28 @@ const App: React.FC = () => {
   };
 
   const t = TRANSLATIONS[lang];
+
+  if (!isAuthReady) {
+    return (
+      <div className="min-h-screen bg-emerald-900 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col p-8 items-center justify-center text-center">
+        <div className="w-32 h-32 bg-emerald-800 rounded-[40px] flex items-center justify-center text-6xl shadow-2xl mb-12 border-b-8 border-red-600">🇰🇪</div>
+        <h1 className="text-4xl font-black tracking-tighter uppercase mb-4">Akiba Kenya</h1>
+        <p className="text-gray-500 max-w-xs mb-12 font-medium leading-relaxed">Secure your financial future. Track, save, and invest with the power of AI.</p>
+        <button onClick={handleLogin} className="w-full max-w-xs bg-black text-white py-5 rounded-[28px] font-black uppercase tracking-widest text-sm shadow-2xl hover:bg-emerald-900 transition-all active:scale-95 flex items-center justify-center gap-3">
+          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.909 3.292-2.09 4.413-1.477 1.408-3.762 2.816-7.84 2.816-6.34 0-11.246-5.116-11.246-11.464s4.906-11.464 11.246-11.464c3.42 0 5.846 1.348 7.746 3.18l2.314-2.314c-2.644-2.546-6.187-4.413-10.06-4.413-7.22 0-13.12 5.9-13.12 13.12s5.9 13.12 13.12 13.12c3.75 0 6.59-1.247 8.89-3.645 2.293-2.398 3.013-5.736 3.013-8.347 0-.633-.056-1.232-.148-1.782h-11.755z"/></svg>
+          Sign in with Google
+        </button>
+      </div>
+    );
+  }
 
   if (isLocked) {
     return (
@@ -193,9 +333,10 @@ const App: React.FC = () => {
       case 'coach': return <VoiceCoach transactions={transactions} profile={profile} onAddTransaction={addTransaction} />;
       case 'profile': return <Profile profile={profile} onSave={setProfile} lang={lang} onLangToggle={(l) => setLang(l)} />;
       case 'analysis': return <FinancialAnalysis transactions={transactions} budgets={budgets} onUpdateBudgets={updateBudgets} onUpdateTransaction={updateTransaction} onDeleteTransaction={deleteTransaction} lang={lang} />;
-      case 'goals': return <Goals transactions={transactions} profile={profile} challenges={challenges} onUpdateChallenges={updateChallenges} onUpdateGoals={(g) => setProfile({...profile, financialGoals: g})} lang={lang} />;
+      case 'goals': return <Goals transactions={transactions} profile={profile} challenges={challenges} onUpdateChallenges={updateChallenges} onToggleWeek={toggleChallengeWeek} onUpdateGoals={(g) => setProfile({...profile, financialGoals: g})} lang={lang} />;
       case 'investments': return <InvestmentTracker profile={profile} onUpdateInvestments={updateInvestments} />;
       case 'chamas': return <ChamaManager profile={profile} onUpdateChamas={updateChamas} />;
+      case 'wallet': return <WalletComponent wallet={wallet} userId={user.uid} />;
       default: return <Dashboard transactions={transactions} profile={profile} budgets={budgets} onNavigate={setActiveTab} lang={lang} onUpdateProfile={setProfile} onUpdateTransaction={updateTransaction} onDeleteTransaction={deleteTransaction} />;
     }
   };
@@ -263,11 +404,11 @@ const App: React.FC = () => {
         <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
       </button>
 
-      <nav className="fixed bottom-4 left-4 right-4 sm:bottom-6 sm:left-1/2 sm:-translate-x-1/2 sm:w-[500px] bg-black/95 backdrop-blur-md flex justify-around items-center p-3 z-50 rounded-[32px] shadow-[0_10px_30px_rgba(0,0,0,0.4)] border border-emerald-800/50">
+      <nav className="fixed bottom-4 left-4 right-4 sm:bottom-6 sm:left-1/2 sm:-translate-x-1/2 sm:w-[550px] bg-black/95 backdrop-blur-md flex justify-around items-center p-3 z-50 rounded-[32px] shadow-[0_10px_30px_rgba(0,0,0,0.4)] border border-emerald-800/50">
         <NavButton active={activeTab === 'home'} onClick={() => setActiveTab('home')} icon="home" label={t.home} />
+        <NavButton active={activeTab === 'wallet'} onClick={() => setActiveTab('wallet')} icon="wallet" label="Wallet" />
         <NavButton active={activeTab === 'tax'} onClick={() => setActiveTab('tax')} icon="tax" label={t.tax} />
         <NavButton active={activeTab === 'analysis'} onClick={() => setActiveTab('analysis')} icon="analysis" label="Insights" />
-        <NavButton active={activeTab === 'coach'} onClick={() => setActiveTab('coach')} icon="voice" label={t.coach} />
         <NavButton active={activeTab === 'goals'} onClick={() => setActiveTab('goals')} icon="goals" label={t.goals} />
       </nav>
     </div>
@@ -277,7 +418,7 @@ const App: React.FC = () => {
 interface NavButtonProps {
   active: boolean;
   onClick: () => void;
-  icon: 'home' | 'tax' | 'voice' | 'analysis' | 'goals';
+  icon: 'home' | 'tax' | 'voice' | 'analysis' | 'goals' | 'wallet';
   label: string;
 }
 
@@ -287,7 +428,8 @@ const NavButton: React.FC<NavButtonProps> = ({ active, onClick, icon, label }) =
     tax: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1.0 01.293.707V19a2 2 0 01-2 2z" />,
     voice: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-20a3 3 0 013 3v5a3 3 0 01-6 0V7a3 3 0 013-3z" />,
     analysis: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />,
-    goals: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+    goals: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />,
+    wallet: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
   };
 
   return (

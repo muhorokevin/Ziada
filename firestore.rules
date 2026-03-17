@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: /users/{userId}
+    // Fields: fullName, employmentType, monthlyIncome, industry, kraPin, financialGoals, avatar, isPasswordEnabled, password, insurancePremium, mortgageInterest, hasOnboarded, hasSeenGuide
+    //
+    // Collection: /users/{userId}/transactions/{transactionId}
+    // Fields: date, merchant, amount, category, type, source, vatAmount, isBusiness
+    //
+    // Collection: /users/{userId}/budgets/{budgetId}
+    // Fields: category, weeklyLimit, monthlyLimit
+    //
+    // Collection: /users/{userId}/wallet/main
+    // Fields: balance, currency, lastUpdated
+    //
+    // Collection: /users/{userId}/wallet_transactions/{txId}
+    // Fields: date, amount, type, status, description, reference, phoneNumber
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUserProfile(data) {
+      return data.fullName is string && data.fullName.size() < 100 &&
+             data.employmentType is string &&
+             data.monthlyIncome is number &&
+             data.hasOnboarded is bool;
+    }
+
+    function isValidTransaction(data) {
+      return data.amount is number && data.amount >= 0 &&
+             data.merchant is string && data.merchant.size() < 100 &&
+             data.type in ['expense', 'income'] &&
+             isValidDateString(data.date);
+    }
+
+    function isValidWallet(data) {
+      return data.balance is number &&
+             data.currency is string &&
+             isValidDateString(data.lastUpdated);
+    }
+
+    function isValidWalletTransaction(data) {
+      return data.amount is number &&
+             data.type in ['deposit', 'withdrawal', 'transfer', 'payment'] &&
+             data.status in ['pending', 'completed', 'failed'] &&
+             isValidDateString(data.date);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+      
+      match /transactions/{txId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      match /budgets/{budgetId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      match /wallet/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      match /wallet_transactions/{txId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+  }
+}

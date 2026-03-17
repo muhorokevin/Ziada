@@ -8,6 +8,7 @@ interface GoalsProps {
   profile: UserProfile;
   challenges: SavingsChallenge[];
   onUpdateChallenges: (ch: SavingsChallenge[]) => void;
+  onToggleWeek: (challengeId: string, week: number) => void;
   onUpdateGoals: (goals: string[]) => void;
   lang: 'en' | 'sw';
 }
@@ -27,13 +28,18 @@ const PRESET_TEMPLATES = [
   { id: 'furniture', name: 'Furniture Upgrade', seed: 2000, increment: 500, weeks: 8, icon: '🛋️', desc: 'Home comfort.', color: 'orange' },
 ];
 
-const Goals: React.FC<GoalsProps> = ({ transactions, profile, challenges, onUpdateChallenges, onUpdateGoals, lang }) => {
+const Goals: React.FC<GoalsProps> = ({ transactions, profile, challenges, onUpdateChallenges, onToggleWeek, onUpdateGoals, lang }) => {
   const [newGoal, setNewGoal] = useState('');
   const [isCreatingChallenge, setIsCreatingChallenge] = useState(false);
   const [viewingChallenge, setViewingChallenge] = useState<SavingsChallenge | null>(null);
   const [showTotals, setShowTotals] = useState(false);
   const [challengeForm, setChallengeForm] = useState({ name: 'Challenge', seed: 50, increment: 50, weeks: 52 });
   
+  const activeChallenge = useMemo(() => {
+    if (!viewingChallenge) return null;
+    return challenges.find(c => c.id === viewingChallenge.id) || viewingChallenge;
+  }, [viewingChallenge, challenges]);
+
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
   const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
   const potentialSavings = Math.max(0, totalIncome - totalExpenses);
@@ -61,18 +67,7 @@ const Goals: React.FC<GoalsProps> = ({ transactions, profile, challenges, onUpda
   };
 
   const toggleWeek = (challengeId: string, week: number) => {
-    const newChallenges = challenges.map(c => {
-      if (c.id === challengeId) {
-        const completed = c.completedWeeks.includes(week)
-          ? c.completedWeeks.filter(w => w !== week)
-          : [...c.completedWeeks, week];
-        return { ...c, completedWeeks: completed };
-      }
-      return c;
-    });
-    onUpdateChallenges(newChallenges);
-    const updated = newChallenges.find(c => c.id === challengeId);
-    if (updated) setViewingChallenge(updated);
+    onToggleWeek(challengeId, week);
   };
 
   return (
@@ -153,11 +148,11 @@ const Goals: React.FC<GoalsProps> = ({ transactions, profile, challenges, onUpda
       </section>
 
       {/* TRACKER MODAL */}
-      {viewingChallenge && (
+      {activeChallenge && (
         <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-6 animate-in slide-in-from-bottom-10 duration-300">
           <div className="bg-white w-full max-w-lg rounded-t-[50px] sm:rounded-[50px] p-10 max-h-[90vh] overflow-y-auto shadow-2xl border-t-8 border-emerald-800">
             <div className="flex justify-between items-center mb-8">
-              <h4 className="text-3xl font-black uppercase tracking-tighter">{viewingChallenge.name}</h4>
+              <h4 className="text-3xl font-black uppercase tracking-tighter">{activeChallenge.name}</h4>
               <button onClick={() => setViewingChallenge(null)} className="bg-gray-100 p-3 rounded-full text-lg">✖</button>
             </div>
             
@@ -171,8 +166,8 @@ const Goals: React.FC<GoalsProps> = ({ transactions, profile, challenges, onUpda
                  </p>
                  <p className="text-3xl font-black">
                    {showTotals 
-                    ? `${CURRENCY} ${viewingChallenge.completedWeeks.reduce((sum, w) => sum + (viewingChallenge.seedAmount + (w - 1) * viewingChallenge.weeklyIncrement), 0).toLocaleString()}`
-                    : `${viewingChallenge.completedWeeks.length} / ${viewingChallenge.durationWeeks}`
+                    ? `${CURRENCY} ${activeChallenge.completedWeeks.reduce((sum, w) => sum + (activeChallenge.seedAmount + (w - 1) * activeChallenge.weeklyIncrement), 0).toLocaleString()}`
+                    : `${activeChallenge.completedWeeks.length} / ${activeChallenge.durationWeeks}`
                    }
                  </p>
                  <p className="text-[8px] font-bold text-emerald-600 uppercase mt-2">Click to toggle</p>
@@ -183,26 +178,26 @@ const Goals: React.FC<GoalsProps> = ({ transactions, profile, challenges, onUpda
                  </p>
                  <p className="text-3xl font-black text-emerald-800">
                     {showTotals 
-                      ? `${CURRENCY} ${([...Array(viewingChallenge.durationWeeks)].reduce((sum, _, i) => sum + (viewingChallenge.seedAmount + i * viewingChallenge.weeklyIncrement), 0)).toLocaleString()}`
-                      : `${CURRENCY} ${(viewingChallenge.seedAmount + (viewingChallenge.completedWeeks.length * viewingChallenge.weeklyIncrement)).toLocaleString()}`
+                      ? `${CURRENCY} ${([...Array(activeChallenge.durationWeeks)].reduce((sum, _, i) => sum + (activeChallenge.seedAmount + i * activeChallenge.weeklyIncrement), 0)).toLocaleString()}`
+                      : `${CURRENCY} ${(activeChallenge.seedAmount + (activeChallenge.completedWeeks.length * activeChallenge.weeklyIncrement)).toLocaleString()}`
                     }
                  </p>
                </div>
             </div>
 
             <div className="grid grid-cols-5 gap-3 mb-10">
-              {[...Array(viewingChallenge.durationWeeks)].map((_, i) => {
+              {[...Array(activeChallenge.durationWeeks)].map((_, i) => {
                 const weekNum = i + 1;
-                const isCompleted = viewingChallenge.completedWeeks.includes(weekNum);
+                const isCompleted = activeChallenge.completedWeeks.includes(weekNum);
                 return (
-                  <button key={i} onClick={() => toggleWeek(viewingChallenge.id, weekNum)} className={`aspect-square rounded-2xl flex items-center justify-center font-black text-xs transition-all border-2 ${isCompleted ? 'bg-emerald-800 border-emerald-900 text-white shadow-lg' : 'bg-gray-50 border-gray-100 text-gray-400 hover:border-emerald-200'}`}>
+                  <button key={i} onClick={() => toggleWeek(activeChallenge.id, weekNum)} className={`aspect-square rounded-2xl flex items-center justify-center font-black text-xs transition-all border-2 ${isCompleted ? 'bg-emerald-800 border-emerald-900 text-white shadow-lg' : 'bg-gray-50 border-gray-100 text-gray-400 hover:border-emerald-200'}`}>
                     {weekNum}
                   </button>
                 );
               })}
             </div>
 
-            <button onClick={() => { if(confirm("Stop challenge?")) { onUpdateChallenges(challenges.filter(c => c.id !== viewingChallenge.id)); setViewingChallenge(null); }}} className="w-full text-red-500 font-black uppercase tracking-widest text-[11px] py-4 bg-red-50 rounded-2xl">Abort Financial Mission</button>
+            <button onClick={() => { if(confirm("Stop challenge?")) { onUpdateChallenges(challenges.filter(c => c.id !== activeChallenge.id)); setViewingChallenge(null); }}} className="w-full text-red-500 font-black uppercase tracking-widest text-[11px] py-4 bg-red-50 rounded-2xl">Abort Financial Mission</button>
           </div>
         </div>
       )}
