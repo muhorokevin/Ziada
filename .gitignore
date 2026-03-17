@@ -11,9 +11,6 @@ dist/
 .env.test.local
 .env.production.local
 
-# Firebase config (contains secrets)
-firebase-applet-config.json
-
 # Logs
 npm-debug.log*
 yarn-debug.log*

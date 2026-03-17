@@ -44,7 +44,7 @@ const FinancialAnalysis: React.FC<FinancialAnalysisProps> = ({ transactions, bud
     }
 
     setIsGenerating(true);
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     
     // Get last 7 days of data
     const weekAgo = new Date();

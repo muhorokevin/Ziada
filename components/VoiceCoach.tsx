@@ -81,7 +81,7 @@ const VoiceCoach: React.FC<VoiceCoachProps> = ({ transactions, profile, onAddTra
     setStatus('connecting');
     setIsActive(true);
 
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     
     try {
       const inputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
